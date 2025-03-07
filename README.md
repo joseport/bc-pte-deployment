@@ -4,16 +4,18 @@ A Visual Studio Code extension for deploying Business Central apps as PTE (Per-T
 
 ## Features
 
-- Deploy AL apps to Business Central as PTE
-- Uses the same environment configurations from your launch.json
+- Deploy AL apps to Business Central as PTE (Per-Tenant Extensions)
+- Uses the existing environment configurations from your launch.json
 - Automatically builds your solution before deployment
 - Supports multiple environments with easy selection
+- Shows deployment progress and status in output channel
 
 ## Requirements
 
 - Visual Studio Code 1.60.0 or higher
 - AL Language extension
 - Access to Business Central with proper permissions
+- Azure AD app registration with Business Central API permissions
 
 ## Installation
 
@@ -22,38 +24,56 @@ A Visual Studio Code extension for deploying Business Central apps as PTE (Per-T
 
 ## Setup
 
-Before using the extension, you need to configure your Business Central authentication:
+The extension uses the authentication information directly from your launch.json file. Make sure your launch.json includes the following credentials for each environment:
 
-1. Open VS Code settings (File > Preferences > Settings)
-2. Search for "BC PTE Deployment"
-3. Fill in the following details:
-   - **Tenant ID**: Your Azure AD tenant ID
-   - **Client ID**: App registration client ID with Business Central permissions
-   - **Client Secret**: App registration client secret
+```json
+{
+  "configurations": [
+    {
+      "type": "al",
+      "request": "launch",
+      "name": "Your Environment Name",
+      "server": "https://your-bc-server",
+      "environmentName": "your-environment",
+      "tenant": "your-tenant-id",
+      "clientID": "your-client-id",
+      "clientSecret": "your-client-secret"
+      // ... other AL configuration properties
+    }
+  ]
+}
+```
 
 ## Usage
 
 1. Open your AL project in VS Code
-2. Ensure your launch.json file is properly configured with Business Central environments
-3. Use one of the following methods to deploy:
-   - Right-click in an AL file and select "BC: Publish as PTE (Per-Tenant Extension)" 
-   - Right-click on a file in the Explorer and select "BC: Publish as PTE (Per-Tenant Extension)"
+2. Ensure your launch.json file is properly configured with Business Central environments, including the required client ID and client secret
+3. Use the following method to deploy:
    - Press Ctrl+Shift+P and search for "BC: Publish as PTE"
 
 4. If you have multiple environments in your launch.json, select the target environment
 5. The extension will:
-   - Build your solution
-   - Find the compiled .app file
+   - Build your solution using the AL Language extension
+   - Find the compiled .app file based on your app.json information
    - Upload and deploy it as a PTE to your selected environment
+   - Provide status updates in the PTE Deployment output channel
 
-## Extension Settings
+## How It Works
 
-This extension contributes the following settings:
+The extension performs the following steps:
+1. Validates that you're in an AL project
+2. Builds the solution using the AL Language extension
+3. Reads environment configurations from your launch.json
+4. Authenticates with Business Central using OAuth client credentials
+5. Uploads the app to the selected environment
+6. Initiates the PTE installation process
 
-* `bcPteDeployment.tenantId`: Your Azure AD tenant ID
-* `bcPteDeployment.clientId`: Business Central OAuth Client ID
-* `bcPteDeployment.clientSecret`: Business Central OAuth Client Secret
-* `bcPteDeployment.scope`: OAuth scope for Business Central API (default: "https://api.businesscentral.dynamics.com/.default")
+## App File Detection
+
+The extension automatically finds your compiled app file using the pattern:
+`{publisher}_{name}_{version}.app`
+
+This information is extracted from your app.json file.
 
 ## Differences from AL Language Extension
 
