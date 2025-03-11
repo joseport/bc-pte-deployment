@@ -14,18 +14,7 @@ interface LaunchConfig {
     type: string;
     request: string;
     name: string;
-    server: string;
-    serverInstance?: string;
     tenant?: string;
-    authentication?: string;
-    startupObjectId?: number;
-    startupObjectType?: string;
-    breakOnError?: boolean;
-    launchBrowser?: boolean;
-    enableLongRunningSqlStatements?: boolean;
-    enableSqlInformationDebugger?: boolean;
-    schemaUpdateMode?: string;
-    environmentType?: string;
     environmentName?: string;
     companyName?: string;
 	clientID?: string;
@@ -75,15 +64,16 @@ export function activate(context: vscode.ExtensionContext) {
 			
             // Build the solution first
             const builtSuccessfully = await buildSolution();
-			outputChannel.show();
             if (!builtSuccessfully) {
                 vscode.window.showErrorMessage('Failed to build the solution.');
 				outputChannel.appendLine('Failed to build the solution...');
                 return;
             }
 
-			outputChannel.appendLine('Solution built successfully...');
+            outputChannel.appendLine('Solution built successfully...');
 			outputChannel.appendLine('Getting available environments...');
+            // Ensure your output channel is shown again after build
+
             // Get available environments from launch.json
             const environments = await getEnvironmentsFromLaunchJson();
             
@@ -100,19 +90,25 @@ export function activate(context: vscode.ExtensionContext) {
             if (environments.length === 1) {
                 selectedEnvironment = environments[0];
             } else {
-                const environmentNames = environments.map(env => env.name);
-                const selectedName = await vscode.window.showQuickPick(environmentNames, {
+                const environmentItems = environments.map(env => ({
+                    label: env.name,
+                    detail: env.config.environmentName
+                }));
+                
+                const selectedItem = await vscode.window.showQuickPick(environmentItems, {
                     placeHolder: 'Select Business Central environment to deploy to'
                 });
                 
-                if (!selectedName) {
-					outputChannel.appendLine('User cancelled the deployment...');
+                if (!selectedItem) {
+                    outputChannel.appendLine('User cancelled the deployment...');
+                    outputChannel.show();
                     return; // User cancelled
                 }
                 
-                selectedEnvironment = environments.find(env => env.name === selectedName)!;
-				outputChannel.appendLine(`Selected environment: ${selectedEnvironment.name}...`);
+                selectedEnvironment = environments.find(env => env.name === selectedItem.label)!;
+                outputChannel.appendLine(`Selected environment: ${selectedEnvironment.name}...`);
             }
+            outputChannel.show();
 			
 			// use the selected environment to get client ID and secret
             authConfig = {
@@ -211,10 +207,8 @@ async function getEnvironmentsFromLaunchJson(): Promise<BusinessCentralEnvironme
         
 		// Filter for AL configurations with clientId and clientSecret defined
 		const alConfigs = launchJson.configurations.filter((config: any) => 
-			config.type === 'al' && 
-			config.request === 'launch' && 
-			config.clientID && 
-			config.clientSecret
+			config.type === 'PTE'
+            && config.request === 'AL PTE Publish'
 		);
         
         return alConfigs.map((config: LaunchConfig) => ({

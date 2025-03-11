@@ -19,7 +19,7 @@
     "PTE",
     "Per-Tenant Extension"
   ],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
@@ -53,17 +53,56 @@
     },
     "debuggers": [
       {
-        "type": "al",
+        "type": "PTE",
+        "label": "PTE Deployment",
+        "configurationSnippets": [
+          {
+            "label": "PTE Deployment",
+            "description": "Launch PTE Deployment",
+            "body": {
+              "type": "PTE",
+              "request": "AL PTE Publish",
+              "name": "${0:Publish as PTE}",
+              "tenant": "${1:00000000-0000-0000-0000-000000000000}",
+              "environmentName": "${2:My Environment}",
+              "companyName": "${3:My Company}",
+              "clientID": "${4:00000000-0000-0000-0000-000000000000}",
+              "clientSecret": "${5:00000000-0000-0000-0000-000000000000}"
+            }
+          }
+        ],
         "configurationAttributes": {
-          "launch": {
+          "AL PTE Publish": {
             "properties": {
+              "name": {
+                "type": "string",
+                "description": "Name for PTE Deployment Configuration",
+                "default": ""
+              },
+              "tenant": {
+                "type": "string",
+                "description": "Tenant ID for PTE Deployment",
+                "default": ""
+              },
+              "environmentName": {
+                "type": "string",
+                "description": "Environment Name for PTE Deployment",
+                "default": ""
+              },
+              "companyName": {
+                "type": "string",
+                "description": "Company Name for PTE Deployment",
+                "default": ""
+              },
               "clientID": {
                 "type": "string",
-                "description": "Client ID for PTE Deployment"
+                "description": "Client ID for PTE Deployment",
+                "default": ""
               },
               "clientSecret": {
                 "type": "string",
-                "description": "Client Secret for PTE Deployment"
+                "description": "Client Secret for PTE Deployment",
+                "default": ""
               }
             }
           }
@@ -80,7 +119,7 @@
     "watch-tests": "tsc -p . -w --outDir out",
     "pretest": "npm run compile-tests && npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js"
+    "test": "node ./src/test/runTest.js"
   },
   "devDependencies": {
     "@types/glob": "^8.1.0",
