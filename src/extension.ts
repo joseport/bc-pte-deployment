@@ -75,7 +75,7 @@ export function activate(context: vscode.ExtensionContext) {
             // Ensure your output channel is shown again after build
 
             // Get available environments from launch.json
-            const environments = await getEnvironmentsFromLaunchJson();
+            const environments = await getEnvironmentsFromLaunchJson(outputChannel);
             
             if (environments.length === 0) {
                 vscode.window.showErrorMessage('No Business Central environments found in launch.json.');
@@ -185,7 +185,7 @@ async function buildSolution(): Promise<boolean> {
 }
 
 // Read environments from launch.json
-async function getEnvironmentsFromLaunchJson(): Promise<BusinessCentralEnvironment[]> {
+async function getEnvironmentsFromLaunchJson(outputChannel: vscode.OutputChannel): Promise<BusinessCentralEnvironment[]> {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
         return [];
@@ -217,6 +217,7 @@ async function getEnvironmentsFromLaunchJson(): Promise<BusinessCentralEnvironme
         }));
     } catch (error) {
         console.error('Error reading launch.json:', error);
+        outputChannel.appendLine('Error reading launch.json: ' + error);
         throw new Error('Could not parse launch.json');
     }
 }
@@ -281,11 +282,11 @@ async function deployAsPTE(
         try {
             // Step 1: Get auth token
             progress.report({ message: 'Authenticating with Business Central...' });
-            const authToken = await getBusinessCentralToken(authConfig);
+            const authToken = await getBusinessCentralToken(authConfig,outputChannel);
             
             // Step 2: Publish app
             progress.report({ message: 'Uploading app...' });
-            await uploadAppToBusinessCentral(appFilePath, environmentName, authToken);
+            await uploadAppToBusinessCentral(appFilePath, environmentName, authToken,outputChannel);
             outputChannel.appendLine('App uploaded successfully...');
 
 			// Step 3: Show message to user
@@ -301,7 +302,7 @@ async function deployAsPTE(
 }
 
 // Get auth token for Business Central
-async function getBusinessCentralToken(authConfig: BCAuth): Promise<string> {
+async function getBusinessCentralToken(authConfig: BCAuth, outputChannel: vscode.OutputChannel ): Promise<string> {
     try {
         const params = new URLSearchParams();
         params.append('grant_type', 'client_credentials');
@@ -318,6 +319,8 @@ async function getBusinessCentralToken(authConfig: BCAuth): Promise<string> {
         return response.data.access_token;
     } catch (error) {
         console.error('Authentication failed:', error);
+        outputChannel.appendLine('Authentication failed: ' + error);
+        outputChannel.appendLine('Failed to authenticate with Business Central...');
         throw new Error('Failed to authenticate with Business Central');
     }
 }
@@ -326,11 +329,12 @@ async function getBusinessCentralToken(authConfig: BCAuth): Promise<string> {
 async function uploadAppToBusinessCentral(
     appFilePath: string, 
     environmentName: string, 
-    authToken: string
+    authToken: string,
+    outputChannel: vscode.OutputChannel
 ): Promise<void> {
     try {
 		// Get the BC company ID
-		const companyId = await getBusinessCentralCompanyId(environmentName, authToken);
+		const companyId = await getBusinessCentralCompanyId(environmentName, authToken,outputChannel);
 
 		// Upload the app
 		const url = `https://api.businesscentral.dynamics.com/v2.0/${environmentName}/api/microsoft/automation/v1.0/companies(${companyId})/extensionUpload(0)/content`;
@@ -351,6 +355,7 @@ async function uploadAppToBusinessCentral(
 		
 		// Verificar el resultado
 		if (response.status !== 204) {
+            outputChannel.appendLine(`Unexpected status code: ${response.status}`);
 			throw new Error(`Unexpected status code: ${response.status}`);
 		}
 		
@@ -358,11 +363,14 @@ async function uploadAppToBusinessCentral(
 
     } catch (error: any) {
         console.error('Upload failed:', error);
+        outputChannel.appendLine('Upload failed: ' + error);
+
         if (error.response) {
             console.error('Error data:', error.response.data);
             console.error('Error status:', error.response.status);
             console.error('Error headers:', error.response.headers);
         }
+        outputChannel.appendLine('Failed to upload app to Business Central: ' + error.message);
         throw new Error(`Failed to upload app to Business Central: ${error.message}`);
     }
 }
@@ -370,7 +378,8 @@ async function uploadAppToBusinessCentral(
 // Get Business Central company ID
 async function getBusinessCentralCompanyId(
     environmentName: string,
-    authToken: string
+    authToken: string,
+    outputChannel: vscode.OutputChannel
 ): Promise<string> {
     try {
         const url = `https://api.businesscentral.dynamics.com/v2.0/${environmentName}/api/microsoft/automation/v1.0/companies`;
@@ -385,12 +394,15 @@ async function getBusinessCentralCompanyId(
         const companies = response.data.value;
         
         if (!companies || companies.length === 0) {
+            outputChannel.appendLine('No companies found in Business Central environment...');
             throw new Error('No companies found in Business Central environment');
         }
         
         return companies[0].id;
     } catch (error) {
         console.error('Failed to get company ID:', error);
+        outputChannel.appendLine('Failed to get company ID: ' + error);
+        outputChannel.appendLine('Failed to get company ID from Business Central...');
         throw new Error('Failed to get company ID from Business Central');
     }
 }
