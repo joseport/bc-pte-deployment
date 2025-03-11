@@ -30,15 +30,14 @@ The extension uses the authentication information directly from your launch.json
 {
   "configurations": [
     {
-      "type": "al",
-      "request": "launch",
-      "name": "Your Environment Name",
-      "server": "https://your-bc-server",
-      "environmentName": "your-environment",
+      "type": "PTE",
+      "request": "AL PTE Publish",
+      "name": "your-environment-name",
       "tenant": "your-tenant-id",
+      "environmentName": "your-environment",
+      "companyName": "your-company-name",
       "clientID": "your-client-id",
       "clientSecret": "your-client-secret"
-      // ... other AL configuration properties
     }
   ]
 }
