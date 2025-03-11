@@ -1,7 +1,5 @@
-// TODO Actualizar algunos mensages para mostrar en un output channel
 // TODO Agregar un comando para obtener el estado de la instalacion de la extension
 // TODO Refactorizar el codigo para que sea mas limpio y entendible y agregar comentarios y separar en otros archivos
-// TODO Analisar si crear una nueva configuracion o hacer como actualmente que se altera la conf tipo al en el launch.json
 
 
 import * as vscode from 'vscode';
