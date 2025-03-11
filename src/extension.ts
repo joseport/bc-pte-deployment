@@ -296,6 +296,7 @@ async function deployAsPTE(
 			return;
         } catch (error) {
             console.error('Deployment failed:', error);
+            outputChannel.appendLine('Deployment failed: ' + error);
             throw error;
         }
     });
