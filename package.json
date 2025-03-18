@@ -6,7 +6,7 @@
   "description": "Business Central PTE Deployment",
   "repository": {
     "type": "git",
-    "url": "https://github.com/joseport/bc-pte-deployment"
+    "url": "https://github.com/joseport/bc-pte-deployment.git"
   },
   "version": "0.0.1",
   "engines": {
