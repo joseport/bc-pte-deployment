@@ -147,6 +147,113 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     context.subscriptions.push(disposable);
+
+    // Register command for getting extension deployment status
+    let statusCommand = vscode.commands.registerCommand('bc-pte-deployment.getDeploymentStatus', async () => {
+        try {
+            outputChannel.clear();
+            outputChannel.appendLine('Fetching deployment status...');
+            outputChannel.show();
+            // Check if we're in an AL project
+            if (!isALProject()) {
+                vscode.window.showErrorMessage('This is not an AL project. Please open an AL project.');
+                outputChannel.appendLine('Project is not an AL project...');
+                outputChannel.appendLine('Deployment process finished.');
+                return;
+            }
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders) {
+                vscode.window.showErrorMessage('No workspace folder found.');
+                outputChannel.appendLine('No workspace folder found...');
+                return;
+            }
+
+            // Get available environments from launch.json
+            const environments = await getEnvironmentsFromLaunchJson(outputChannel);
+            if (environments.length === 0) {
+                vscode.window.showErrorMessage('No Business Central environments found in launch.json.');
+                outputChannel.appendLine('No Business Central environments found in launch.json...');
+                return;
+            }
+
+            // If multiple environments, let user choose
+            let selectedEnvironment: BusinessCentralEnvironment;
+            if (environments.length === 1) {
+                selectedEnvironment = environments[0];
+            } else {
+                const environmentItems = environments.map(env => ({
+                    label: env.name,
+                    detail: env.config.environmentName
+                }));
+
+                const selectedItem = await vscode.window.showQuickPick(environmentItems, {
+                    placeHolder: 'Select Business Central environment to check deployment status'
+                });
+
+                if (!selectedItem) {
+                    outputChannel.appendLine('User cancelled the operation...');
+                    return; // User cancelled
+                }
+
+                selectedEnvironment = environments.find(env => env.name === selectedItem.label)!;
+            }
+
+            const authConfig: BCAuth = {
+                tenantId: selectedEnvironment.config.tenant || '',
+                clientId: selectedEnvironment.config.clientID || '',
+                clientSecret: selectedEnvironment.config.clientSecret || '',
+                scope: 'https://api.businesscentral.dynamics.com/.default',
+                tokenUrl: `https://login.microsoftonline.com/${selectedEnvironment.config.tenant}/oauth2/v2.0/token`
+            };
+
+            if (!authConfig.clientId || !authConfig.clientSecret || !authConfig.tenantId) {
+                vscode.window.showErrorMessage('Client ID, Client Secret, or Tenant ID is missing in launch.json.');
+                outputChannel.appendLine('Client ID, Client Secret, or Tenant ID is missing in launch.json...');
+                return;
+            }
+
+            let appName = '';
+            let version = '';
+            let publisher = '';
+            ({ appName, version, publisher } = findAppJsonInfo(workspaceFolders, appName, version, publisher));
+
+            const authToken = await getBusinessCentralToken(authConfig, outputChannel);
+            const companyId = await getBusinessCentralCompanyId(selectedEnvironment.config.environmentName!, authToken, outputChannel);
+
+            const statusUrl = `https://api.businesscentral.dynamics.com/v2.0/${selectedEnvironment.config.environmentName}/api/microsoft/automation/v2.0/companies(${companyId})/extensionDeploymentStatus?$top=10`;
+            // Only fetch the top 10 statuses
+
+            const response = await axios.get(statusUrl, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Accept': 'application/json'
+                }
+            });
+
+            // Filter data where the app name, version, and publisher match
+            const filteredStatus = response.data.value.filter((status: any) => {
+                return status.name === appName && status.appVersion === version && status.publisher === publisher;
+            }
+            );
+            // const status = response.data;
+            if (filteredStatus.length === 0) {
+                vscode.window.showInformationMessage('No deployment status found for the current app.');
+                outputChannel.appendLine('No deployment status found for the current app...');
+                return;
+            }
+            outputChannel.appendLine('Deployment Status:');
+            // colocar no output channel Name, AppVersion, Publisher, Status, Message
+            filteredStatus.forEach((status: any) => {
+                outputChannel.appendLine(`Environment: ${selectedEnvironment.config.environmentName} - Name: ${status.name} - AppVersion: ${status.appVersion} - Publisher: ${status.publisher} - Status: ${status.status}`);
+            });
+            vscode.window.showInformationMessage('Deployment status fetched successfully. Check the output channel for details.');
+        } catch (error) {
+            console.error('Failed to fetch deployment status:', error);
+            vscode.window.showErrorMessage(`Failed to fetch deployment status: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    });
+
+    context.subscriptions.push(statusCommand);
 }
 
 // Check if the current project is an AL project
@@ -232,13 +339,7 @@ function findAppFile(): string | null {
 	let version = '';
 	let publisher = '';
     try {
-        const appJsonPath = path.join(workspaceFolders[0].uri.fsPath, 'app.json');
-        if (fs.existsSync(appJsonPath)) {
-            const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
-            appName = appJson.name || '';
-			version = appJson.version || '';
-			publisher = appJson.publisher || '';
-        }
+        ({ appName, version, publisher } = findAppJsonInfo(workspaceFolders, appName, version, publisher));
     } catch (error) {
         console.warn('Could not read app.json:', error);
     }
@@ -248,6 +349,17 @@ function findAppFile(): string | null {
 
 }
 
+
+function findAppJsonInfo(workspaceFolders: readonly vscode.WorkspaceFolder[], appName: string, version: string, publisher: string) {
+    const appJsonPath = path.join(workspaceFolders[0].uri.fsPath, 'app.json');
+    if (fs.existsSync(appJsonPath)) {
+        const appJson = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+        appName = appJson.name || '';
+        version = appJson.version || '';
+        publisher = appJson.publisher || '';
+    }
+    return { appName, version, publisher };
+}
 
 // Deploy as PTE to Business Central
 async function deployAsPTE(
@@ -380,6 +492,7 @@ async function getBusinessCentralCompanyId(
     authToken: string,
     outputChannel: vscode.OutputChannel
 ): Promise<string> {
+    // TODO si tiver uma company configurada no launch.json, buscar o id dela caso contrario buscar a primeira
     try {
         const url = `https://api.businesscentral.dynamics.com/v2.0/${environmentName}/api/microsoft/automation/v1.0/companies`;
         

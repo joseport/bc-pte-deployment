@@ -47,8 +47,19 @@ The extension uses the authentication information directly from your launch.json
 
 1. Open your AL project in VS Code
 2. Ensure your launch.json file is properly configured with Business Central environments, including the required client ID and client secret
-3. Use the following method to deploy:
-   - Press Ctrl+Shift+P and search for "BC: Publish as PTE"
+3. Use the following methods:
+   - **Publish as PTE**:
+     - Press Ctrl+Shift+P and search for "BC: Publish as PTE"
+     - If you have multiple environments in your launch.json, select the target environment
+     - The extension will:
+       - Build your solution using the AL Language extension
+       - Find the compiled .app file based on your app.json information
+       - Upload and deploy it as a PTE to your selected environment
+       - Provide status updates in the PTE Deployment output channel
+   - **Get Deployment Status**:
+     - Press Ctrl+Shift+P and search for "BC: Get Extension Deployment Status"
+     - Select the target environment
+     - The extension will fetch and display the current deployment status in the output channel.
 
 4. If you have multiple environments in your launch.json, select the target environment
 5. The extension will:
