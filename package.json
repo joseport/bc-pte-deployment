@@ -2,21 +2,28 @@
   "name": "bc-pte-deployment",
   "displayName": "BC PTE Deployment",
   "publisher": "jtavares",
-  "icon": "media/AppIcon.jpg",
+  "icon": "media/AppIcon.png",
   "description": "Business Central PTE Deployment",
   "repository": {
     "type": "git",
     "url": "https://github.com/joseport/bc-pte-deployment.git"
   },
+  "bugs": {
+    "type": "git",
+    "url": "https: //github.com/joseport/bc-pte-deployment/issues"
+  },
   "license": "SEE LICENSE IN LICENSE",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "engines": {
     "vscode": "^1.97.0"
   },
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:al",
+    "workspaceContains:app.json"
+  ],
   "keywords": [
     "BC",
     "Business Central",

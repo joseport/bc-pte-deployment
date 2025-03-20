@@ -1,5 +1,5 @@
-// TODO Agregar un comando para obtener el estado de la instalacion de la extension
 // TODO Refactorizar el codigo para que sea mas limpio y entendible y agregar comentarios y separar en otros archivos
+// TODO Agregar um comando para ver o status do deployment, se o app esta instalado ou não e se tem erro ou não igual ao que ja existe mas repetindo o comando até acabar ou sucesso ou failed e mostarr num popup
 
 
 import * as vscode from 'vscode';
@@ -12,11 +12,11 @@ interface LaunchConfig {
     type: string;
     request: string;
     name: string;
-    tenant?: string;
-    environmentName?: string;
+    tenant: string;
+    environmentName: string;
     companyName?: string;
-	clientID?: string;
-	clientSecret?: string;
+	clientID: string;
+	clientSecret: string;
 }
 
 interface BusinessCentralEnvironment {
@@ -48,9 +48,10 @@ export function activate(context: vscode.ExtensionContext) {
         try {
 			outputChannel.clear();
 			outputChannel.appendLine('Starting deployment process...');
-			outputChannel.appendLine('Checking if the project is an AL project...');
-			outputChannel.show();
+            outputChannel.show(true);
+            await new Promise(resolve => setTimeout(resolve, 100));
             // Check if we're in an AL project
+			outputChannel.appendLine('Checking if the project is an AL project...');
             if (!isALProject()) {
                 vscode.window.showErrorMessage('This is not an AL project. Please open an AL project.');
 				outputChannel.appendLine('Project is not an AL project...');
@@ -93,21 +94,22 @@ export function activate(context: vscode.ExtensionContext) {
                     detail: env.config.environmentName
                 }));
                 
+                await new Promise(resolve => setTimeout(resolve, 100));
                 const selectedItem = await vscode.window.showQuickPick(environmentItems, {
                     placeHolder: 'Select Business Central environment to deploy to'
                 });
                 
                 if (!selectedItem) {
                     outputChannel.appendLine('User cancelled the deployment...');
-                    outputChannel.show();
+                    outputChannel.show(true);
                     return; // User cancelled
                 }
                 
                 selectedEnvironment = environments.find(env => env.name === selectedItem.label)!;
                 outputChannel.appendLine(`Selected environment: ${selectedEnvironment.name}...`);
             }
-            outputChannel.show();
-			
+            outputChannel.show(true);
+            await new Promise(resolve => setTimeout(resolve, 100));
 			// use the selected environment to get client ID and secret
             authConfig = {
 				tenantId: selectedEnvironment.config.tenant || '',
@@ -153,8 +155,10 @@ export function activate(context: vscode.ExtensionContext) {
         try {
             outputChannel.clear();
             outputChannel.appendLine('Fetching deployment status...');
-            outputChannel.show();
+            outputChannel.show(true);
+            await new Promise(resolve => setTimeout(resolve, 100));
             // Check if we're in an AL project
+            outputChannel.appendLine('Checking if the project is an AL project...');
             if (!isALProject()) {
                 vscode.window.showErrorMessage('This is not an AL project. Please open an AL project.');
                 outputChannel.appendLine('Project is not an AL project...');
@@ -186,6 +190,7 @@ export function activate(context: vscode.ExtensionContext) {
                     detail: env.config.environmentName
                 }));
 
+                await new Promise(resolve => setTimeout(resolve, 100));
                 const selectedItem = await vscode.window.showQuickPick(environmentItems, {
                     placeHolder: 'Select Business Central environment to check deployment status'
                 });
@@ -295,27 +300,30 @@ async function getEnvironmentsFromLaunchJson(outputChannel: vscode.OutputChannel
     if (!workspaceFolders) {
         return [];
     }
-    
+
     const launchJsonPath = path.join(workspaceFolders[0].uri.fsPath, '.vscode', 'launch.json');
-    
+
     if (!fs.existsSync(launchJsonPath)) {
         return [];
     }
-    
+
     try {
-        const launchJsonContent = fs.readFileSync(launchJsonPath, 'utf8');
+        let launchJsonContent = fs.readFileSync(launchJsonPath, 'utf8');
+
+        // Remove trailing commas to handle invalid JSON
+        launchJsonContent = launchJsonContent.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+
         const launchJson = JSON.parse(launchJsonContent);
-        
+
         if (!launchJson.configurations || !Array.isArray(launchJson.configurations)) {
             return [];
         }
-        
-		// Filter for AL configurations with clientId and clientSecret defined
-		const alConfigs = launchJson.configurations.filter((config: any) => 
-			config.type === 'PTE'
-            && config.request === 'AL PTE Publish'
-		);
-        
+
+        // Filter for AL configurations with clientId and clientSecret defined
+        const alConfigs = launchJson.configurations.filter((config: any) =>
+            config.type === 'PTE' && config.request === 'AL PTE Publish'
+        );
+
         return alConfigs.map((config: LaunchConfig) => ({
             name: config.name,
             config: config
