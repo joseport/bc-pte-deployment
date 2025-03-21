@@ -10,10 +10,10 @@
   },
   "bugs": {
     "type": "git",
-    "url": "https: //github.com/joseport/bc-pte-deployment/issues"
+    "url": "https://github.com/joseport/bc-pte-deployment/issues"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "engines": {
     "vscode": "^1.97.0"
   },
@@ -39,16 +39,12 @@
         "title": "BC: Publish as PTE (Per-Tenant Extension)"
       },
       {
+        "command": "bc-pte-deployment.deployWithIncrement",
+        "title": "BC: Publish as PTE (Per-Tenant Extension) with Increment"
+      },
+      {
         "command": "bc-pte-deployment.getDeploymentStatus",
         "title": "BC: Get Extension Deployment Status"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "bc-pte-deployment.deploy",
-        "key": "ctrl+alt+f5",
-        "mac": "cmd+alt+f5",
-        "when": " resourceLangId == al"
       }
     ],
     "menus": {
@@ -81,7 +77,6 @@
               "name": "${0:Publish as PTE}",
               "tenant": "${1:00000000-0000-0000-0000-000000000000}",
               "environmentName": "${2:My Environment}",
-              "companyName": "${3:My Company}",
               "clientID": "${4:00000000-0000-0000-0000-000000000000}",
               "clientSecret": "${5:00000000-0000-0000-0000-000000000000}"
             }
@@ -107,7 +102,7 @@
               },
               "companyName": {
                 "type": "string",
-                "description": "Company Name for PTE Deployment",
+                "description": "Company Name for PTE Deployment, if empty, will use the first company in the Environment",
                 "default": ""
               },
               "clientID": {
@@ -124,7 +119,19 @@
           }
         }
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "BC PTE Deployment",
+      "properties": {
+        "bc-pte-deployment.incrementVersion": {
+          "type": "string",
+          "enum": ["major", "minor", "build", "revision"],
+          "default": "revision",
+          "description": "Specifies the version increment type for deployment."
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run package",

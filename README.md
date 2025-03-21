@@ -45,28 +45,31 @@ The extension uses the authentication information directly from your launch.json
 
 ## Usage
 
-1. Open your AL project in VS Code
-2. Ensure your launch.json file is properly configured with Business Central environments, including the required client ID and client secret
+1. Open your AL project in VS Code.
+2. Ensure your launch.json file is properly configured with Business Central environments, including the required client ID and client secret.
 3. Use the following methods:
    - **Publish as PTE**:
-     - Press Ctrl+Shift+P and search for "BC: Publish as PTE"
-     - If you have multiple environments in your launch.json, select the target environment
+     - Press Ctrl+Shift+P and search for "BC: Publish as PTE".
+     - If you have multiple environments in your launch.json, select the target environment.
      - The extension will:
-       - Build your solution using the AL Language extension
-       - Find the compiled .app file based on your app.json information
-       - Upload and deploy it as a PTE to your selected environment
-       - Provide status updates in the PTE Deployment output channel
+       - Build your solution using the AL Language extension.
+       - Find the compiled .app file based on your app.json information.
+       - Upload and deploy it as a PTE to your selected environment.
+       - Provide status updates in the PTE Deployment output channel.
+   - **Publish as PTE with Increment**:
+     - Press Ctrl+Shift+P and search for "BC: Publish as PTE (Per-Tenant Extension) with Increment".
+     - This will increment the app version (based on your configuration), build the solution, and deploy it as a PTE.
    - **Get Deployment Status**:
-     - Press Ctrl+Shift+P and search for "BC: Get Extension Deployment Status"
-     - Select the target environment
+     - Press Ctrl+Shift+P and search for "BC: Get Extension Deployment Status".
+     - Select the target environment.
      - The extension will fetch and display the current deployment status in the output channel.
 
-4. If you have multiple environments in your launch.json, select the target environment
+4. If you have multiple environments in your launch.json, select the target environment.
 5. The extension will:
-   - Build your solution using the AL Language extension
-   - Find the compiled .app file based on your app.json information
-   - Upload and deploy it as a PTE to your selected environment
-   - Provide status updates in the PTE Deployment output channel
+   - Build your solution using the AL Language extension.
+   - Find the compiled .app file based on your app.json information.
+   - Upload and deploy it as a PTE to your selected environment.
+   - Provide status updates in the PTE Deployment output channel.
 
 ## How It Works
 
@@ -99,6 +102,17 @@ This extension deploys your apps as Per-Tenant Extensions (PTE), which:
 2. Are accessible to all users with appropriate permissions
 3. Have better performance and stability characteristics
 4. Follow the proper extension deployment lifecycle
+
+## Version Increment Configuration
+
+You can configure how the version is incremented before deployment by setting the `bc-pte-deployment.incrementVersion` property in your VS Code settings. The available options are:
+
+- `major`: Increment the major version (e.g., 1.0.0.0 → 2.0.0.0).
+- `minor`: Increment the minor version (e.g., 1.0.0.0 → 1.1.0.0).
+- `build`: Increment the build version (e.g., 1.0.0.0 → 1.0.1.0).
+- `revision`: Increment the revision version (e.g., 1.0.0.0 → 1.0.0.1).
+
+The default value is `revision`.
 
 ## License
 
