@@ -13,7 +13,7 @@
     "url": "https://github.com/joseport/bc-pte-deployment/issues"
   },
   "license": "SEE LICENSE IN LICENSE",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "engines": {
     "vscode": "^1.97.0"
   },

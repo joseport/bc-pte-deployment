@@ -69,7 +69,7 @@ async function executeDeployCommand(
             selectedEnvironment = environments[0];
         } else {
             const environmentItems = environments.map((env, index) => ({
-                label: `${env.name} (${index + 1})`,
+                label: `${env.name}`,
                 detail: env.config.environmentName,
                 index: index
             }));
@@ -243,7 +243,7 @@ export function registerGetDeploymentStatusCommand(context: vscode.ExtensionCont
                 selectedEnvironment = environments[0];
             } else {
                 const environmentItems = environments.map((env, index) => ({
-                    label: `${env.name} (${index + 1})`,
+                    label: `${env.name}`,
                     detail: env.config.environmentName,
                     index: index
                 }));
