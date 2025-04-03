@@ -285,6 +285,13 @@ export function registerGetDeploymentStatusCommand(context: vscode.ExtensionCont
             const statusUrl = `https://api.businesscentral.dynamics.com/v2.0/${selectedEnvironment.config.environmentName}/api/microsoft/automation/v2.0/companies(${companyId})/extensionDeploymentStatus?$top=10`;
             // Only fetch the top 10 statuses
 
+            const dymmyresponse = await axios.get(statusUrl, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Accept': 'application/json'
+                }
+            }); // Dummy request to update businesscentral status
+
             const response = await axios.get(statusUrl, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
@@ -368,8 +375,12 @@ async function getEnvironmentsFromLaunchJson(outputChannel: vscode.OutputChannel
     try {
         let launchJsonContent = fs.readFileSync(launchJsonPath, 'utf8');
 
-        // Remove trailing commas to handle invalid JSON
-        launchJsonContent = launchJsonContent.replace(/,\s*}/g, '}').replace(/,\s*]/g, ']');
+        // Remove comments and trailing commas to handle invalid JSON
+        launchJsonContent = launchJsonContent
+            .replace(/\/\/.*$/gm, '') // Remove single-line comments
+            .replace(/\/\*[\s\S]*?\*\//g, '') // Remove multi-line comments
+            .replace(/,\s*}/g, '}') // Remove trailing commas before closing braces
+            .replace(/,\s*]/g, ']'); // Remove trailing commas before closing brackets
 
         const launchJson = JSON.parse(launchJsonContent);
 
